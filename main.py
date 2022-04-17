@@ -1,26 +1,45 @@
 import os
 import discord
+from discord.ext import commands, tasks
 import boto3
+import functions
 
-#discord bot token
-discord_token = os.environ['aws-BOT_Token']
 
 #initialize discord client
 client = discord.Client()
 
-#use aws ec2 
-ec2  = boto3.resource('ec2')
+#initialize bot commands
+bot = commands.Bot(command_prefix='!')
 
-@client.event
+#AWS session
+session = boto3.Session(
+  aws_access_key_id = os.environ['aws_access_key_id'],
+  aws_secret_access_key = os.environ['aws_secret_access_key'],
+  region_name='us-east-2'
+)
+#initialize aws ec2 
+ec2  = session.resource('ec2')
+
+#Variables:
+#discord bot token
+discord_token = os.environ['aws-BOT_Token']
+#EC2 instance with id
+instance_id = 'i-0df8f3c6a775b5ce7'
+#ec2 instance
+ec2_instance = ec2.Instance(instance_id)
+#get ec2 state (pending/running/stopping/stopped/shutting-down)
+ec2_status = ec2_instance.state['Name']
+#Get aws_commands Channel id
+channel_id = (964627684137271356)
+channel = client.get_channel(channel_id)
+
+
+@bot.event
 async def on_ready():
-  print('We Have logged in as {0.user}'.format(client))
-
-@client.event
-async def on_message(message):
-  if message.author == client.user:
-    return
-
-  if message.content.startswith('!aws-ec2-start'):
-    await message.channel.send('EC2 is intiating start')
-
-client.run(discord_token)
+  print('We Have logged in as {0.user}'.format(bot))
+  
+@bot.command()
+async def aws_ec2_start(ctx):
+  await functions.start_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
+    
+bot.run(discord_token)
