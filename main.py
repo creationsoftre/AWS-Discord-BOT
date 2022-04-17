@@ -41,5 +41,30 @@ async def on_ready():
 @bot.command()
 async def aws_ec2_start(ctx):
   await functions.start_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
+
+async def aws_ec2_stop(ctx):
+  await functions.stop_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
+
+async def aws_ec2_reboot(ctx):
+  await functions.reboot_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
+
+async def help(ctx):
+  embed = discord.Embed(
+        title="AWS Help Guide",
+        description="This AWS bot is to allow you to start,stop, and reboot the AWS EC2 Instance for Assetto Corsa",
+        color=discord.Colour.blurple(), # Pycord provides a class with default colors you can choose from
+    )
+  embed.add_field(title="Commands", value="Utilize the follwoing commands to manage the EC2 instance. **Please use these commands responsibly!**")
+
+  embed.add_field(title="Start EC2", value="!aws_ec2_start", inline=True)
+  embed.add_field(title="Stop EC2", value="!aws_ec2_stop", inline=True)
+  embed.add_field(title="Reboot EC2", value="!aws_ec2_reboot", inline=True)
+ 
+  embed.set_footer(text="created by Trevonte Wigfall") # footers can have icons too
+  embed.set_author(name="Trevonte Wigfall", icon="https://example.com/link-to-my-image.png")
+  embed.set_thumbnail(url="https://example.com/link-to-my-thumbnail.png")
+  embed.set_image(url="https://example.com/link-to-my-banner.png")
+ 
+  await ctx.respond("Help is on the way! Check out the commands to get started.", embed=embed) # Send the embed with some text
     
 bot.run(discord_token)
