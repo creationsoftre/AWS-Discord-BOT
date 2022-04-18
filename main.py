@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 import boto3
 import functions
+from discord.ui import Select,View
 
 
 #initialize bot commands
@@ -93,6 +94,25 @@ async def on_application_command_error(ctx,error):
 #bot for how to guide
 @bot.slash_command(guild_ids=[server_id], description = "A Guide on how to use the bot.")
 async def guide(ctx):
+    select_ui = Select(placeholder="Select a command",
+      options=[
+      discord.SelectOption(label="Start EC2", description="Command to start an EC2 Instance."),
+      discord.SelectOption(label="Stop EC2", description="Command to stop an EC2 Instance."),
+      discord.SelectOption(label="Reboot EC2", description="Command to reboot an EC2 Instance.")
+    ])
+    async def select_callback(interaction):
+      if select_ui.values == "Start EC2":
+        await functions.start_ec2(ctx,ec2_instance,ec2_status,instance_id)
+      elif select_ui.values == "Stop EC2":
+        await functions.stop_ec2(ctx,ec2_instance,ec2_status,instance_id)
+      elif select_ui.values == "Reboot EC2":
+        await functions.reboot_ec2(ctx,ec2_instance,ec2_status,instance_id)
+      else:
+        await ctx.respond("Error occured. Please contact an Administrator.")
+    select_ui.callback = select_callback
+    view = View()
+    view.add_item(select_ui)
+  
     embed = discord.Embed(
         title="AWS Admin BOT Guide",
         description="This AWS bot is to allow you to start ,stop, and reboot a AWS EC2 Instance.",
@@ -106,7 +126,5 @@ async def guide(ctx):
     embed.add_field(name='Reboot EC2 Instance', value='/ec2 reboot', inline=True)
     embed.set_footer(text='© 2022, creationsoftre')
     
- 
-    await ctx.respond("Hello! Here's a cool embed.", embed=embed) # Send the embed with some text
-  
+    await ctx.respond("Hello! Here's a cool embed.", embed=embed, view=view)
 bot.run(discord_token)
