@@ -1,16 +1,24 @@
-import os
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
+import os
 import boto3
 import functions
 
 
-#initialize discord client
-client = discord.Client()
-
 #initialize bot commands
-bot = commands.Bot(command_prefix='!')
+bot = commands.Bot(prefix = commands.when_mentioned_or(">>"))
 
+#### Discord Variables ####
+#discord bot token
+discord_token = os.environ['aws-BOT_Token']
+#Channel id (Guild)
+channel_id = (964627684137271356)
+#server id (Guild)
+server_id = (766533904433545236)
+#discord role id
+ec2_role_id = (965340756330025052)
+
+#### AWS Variables: ####
 #AWS session
 session = boto3.Session(
   aws_access_key_id = os.environ['aws_access_key_id'],
@@ -19,52 +27,86 @@ session = boto3.Session(
 )
 #initialize aws ec2 
 ec2  = session.resource('ec2')
-
-#Variables:
-#discord bot token
-discord_token = os.environ['aws-BOT_Token']
 #EC2 instance with id
 instance_id = 'i-0df8f3c6a775b5ce7'
 #ec2 instance
 ec2_instance = ec2.Instance(instance_id)
 #get ec2 state (pending/running/stopping/stopped/shutting-down)
 ec2_status = ec2_instance.state['Name']
-#Get aws_commands Channel id
-channel_id = (964627684137271356)
-channel = client.get_channel(channel_id)
 
+
+### bot events ###
 
 @bot.event
 async def on_ready():
   print('We Have logged in as {0.user}'.format(bot))
-  
-@bot.command()
-async def aws_ec2_start(ctx):
-  await functions.start_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
 
-async def aws_ec2_stop(ctx):
-  await functions.stop_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
 
-async def aws_ec2_reboot(ctx):
-  await functions.reboot_ec2(ctx,ec2_instance,ec2_status,instance_id,channel_id)
+### bot commands ###
+@bot.slash_command(guild_ids=[server_id], description = "A ping test to make sure the bot is responding as expected.")
 
-async def help(ctx):
-  embed = discord.Embed(
-        title="AWS Help Guide",
-        description="This AWS bot is to allow you to start,stop, and reboot the AWS EC2 Instance for Assetto Corsa",
-        color=discord.Colour.blurple(), # Pycord provides a class with default colors you can choose from
+### Discord Command Cool down ###
+@commands.has_role(ec2_role_id)
+@commands.cooldown(1,60,commands.BucketType.user)
+#ping response function
+async def ping(ctx):
+  await ctx.respond(f"pong! latency: {int(bot.latency * 1000)} ms")
+
+### EC2 Command Group ###
+ec2_cg = bot.create_group("ec2", "AWS EC2 Commands",guild_ids=[server_id])
+
+@ec2_cg.command(description = "command to start ec2 instance")
+### Discord Command Cool down ###
+@commands.has_role(ec2_role_id)
+@commands.cooldown(1,60,commands.BucketType.user)
+async def start(ctx):
+  await functions.start_ec2(ctx,ec2_instance,ec2_status,instance_id)
+
+@ec2_cg.command(description = "command to stop ec2 instance")
+### Discord Command Cool down ###
+@commands.has_role(ec2_role_id)
+@commands.cooldown(1,60,commands.BucketType.user)
+async def stop(ctx):
+  await functions.stop_ec2(ctx,ec2_instance,ec2_status,instance_id)
+
+@ec2_cg.command(description = "command to reboot ec2 instance")
+### Discord Command Cool down ###
+@commands.has_role(ec2_role_id)
+@commands.cooldown(1,60,commands.BucketType.user)
+async def reboot(ctx):
+  await functions.reboot_ec2(ctx,ec2_instance,ec2_status,instance_id)
+
+#error handling on commands
+@bot.event
+async def on_application_command_error(ctx,error):
+  if isinstance(error,commands.CommandOnCooldown):
+    await ctx.respond(f"You are on cooldown, Retry after {int(error.retry_after)} seconds", ephemeral=True)
+  elif isinstance(error,commands.MissingRole):
+    await ctx.respond('You do not have the role required to run this command.', ephemeral = True)
+  else:
+    raise error
+### Bot Guide ###
+
+
+
+#guide on how to use commands
+#bot for how to guide
+@bot.slash_command(guild_ids=[server_id], description = "A Guide on how to use the bot.")
+async def guide(ctx):
+    embed = discord.Embed(
+        title="AWS Admin BOT Guide",
+        description="This AWS bot is to allow you to start ,stop, and reboot a AWS EC2 Instance.",
+        color=discord.Colour.blue(), # Pycord provides a class with default colors you can choose from
     )
-  embed.add_field(title="Commands", value="Utilize the follwoing commands to manage the EC2 instance. **Please use these commands responsibly!**")
-
-  embed.add_field(title="Start EC2", value="!aws_ec2_start", inline=True)
-  embed.add_field(title="Stop EC2", value="!aws_ec2_stop", inline=True)
-  embed.add_field(title="Reboot EC2", value="!aws_ec2_reboot", inline=True)
- 
-  embed.set_footer(text="created by Trevonte Wigfall") # footers can have icons too
-  embed.set_author(name="Trevonte Wigfall", icon="https://example.com/link-to-my-image.png")
-  embed.set_thumbnail(url="https://example.com/link-to-my-thumbnail.png")
-  embed.set_image(url="https://example.com/link-to-my-banner.png")
- 
-  await ctx.respond("Help is on the way! Check out the commands to get started.", embed=embed) # Send the embed with some text
     
+    embed.set_author(name='creationsoftre', url='https://github.com/creationsoftre/', icon_url='https://github.com/creationsoftre/blob/blob/main/logo.png')
+    embed.add_field(name='Commands', value='The commands below is how to manage the aws ec2 instanc:', inline=False)
+    embed.add_field(name='Start EC2 Instance', value='/ec2 start', inline=True)
+    embed.add_field(name='Stop EC2 Instance', value='/ec2 stop', inline=True)
+    embed.add_field(name='Reboot EC2 Instance', value='/ec2 reboot', inline=True)
+    embed.set_footer(text='© 2022, creationsoftre')
+    
+ 
+    await ctx.respond("Hello! Here's a cool embed.", embed=embed) # Send the embed with some text
+  
 bot.run(discord_token)
