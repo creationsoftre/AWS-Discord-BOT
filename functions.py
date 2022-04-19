@@ -1,7 +1,11 @@
 import logging
+import discord
+from discord.ext import commands
 from botocore.exceptions import ClientError
+from discord.ui import Select,View
 
 logger = logging.getLogger(__name__)
+
 
 #function for starting EC2 Instance
 async def start_ec2(ctx,ec2_instance,ec2_status,instance_id):
@@ -98,4 +102,43 @@ async def reboot_ec2(ctx,ec2_instance,ec2_status,instance_id):
       await ctx.respond("Couldn't reboot instance. Instance has been terminiated.")
     else:
       await ctx.respond('An issue has occured. Please contact administrator for further investigation.')
+
+### GUIDE ###
+
+
+class View_UI(View):
+  def __init__(self,ctx):
+    super().__init__(timeout=30)
+    self.ctx = ctx
+    
+  @discord.ui.select(
+    placeholder="Select a command",
+      options=[
+      discord.SelectOption(label="Start EC2", value='start', description="Command to start an EC2 Instance."),
+      discord.SelectOption(label="Stop EC2", value='stop', description="Command to stop an EC2 Instance."),
+      discord.SelectOption(label="Reboot EC2", value='reboot', description="Command to reboot an EC2 Instance.")
+      ],)
+  async def select_callback(self, select, interaction):
+      select.disabled=True
+      if select.values[0] == "Start EC2":
+        await interaction.response.edit_message(view=self)
+        await interaction.followup.send("/ec2 start")
+        #await start_ec2(ctx,ec2_instance,ec2_status,instance_id)
+      elif select.values[0] == "Stop EC2":
+        await interaction.response.edit_message(view=self)
+        await interaction.followup.send(f"Command commenced: {select.values}")
+        #await stop_ec2(ctx,ec2_instance,ec2_status,instance_id)
+      elif select.values[0] == "Reboot EC2":
+        await interaction.response.edit_message(view=self)
+        await interaction.followup.send(f"Command commenced: {select.values}")
+        #await reboot_ec2(ctx, ec2_instance, ec2_status, instance_id)
+      else:
+        await interaction.response.send_message("Error occured. Please contact an Administrator.")
+
+  async def on_timeout(self):
+    for child in self.children:
+      child.disabled = True 
+      child.placeholder ='Disabled Due to Timeout'
+      await self.ctx.edit(content='Timeout Reached. Please try again.', view=self)
+
 
