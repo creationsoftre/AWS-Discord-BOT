@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 import boto3
 import functions
+from threading import Timer
 
 
 # initialize bot commands
@@ -26,21 +27,25 @@ session = boto3.Session(
     region_name="us-east-2",
 )
 # initialize aws ec2
-ec2 = session.resource("ec2")
+ec2_session = session.resource('ec2')
 # EC2 instance with id
 instance_id = "i-0df8f3c6a775b5ce7"
 # ec2 instance
-ec2_instance = ec2.Instance(instance_id)
-# get ec2 state (pending/running/stopping/stopped/shutting-down)
+ec2_instance = ec2_session.Instance(instance_id)
+# get ec2 status
 ec2_status = ec2_instance.state["Name"]
+def get_status():
+  global ec2_status
+  ec2_status = ec2_instance.state["Name"]
+  Timer(60,get_status).start()
 
-
+  
 ### bot events ###
 @bot.event
 async def on_ready():
-    print("We Have logged in as {0.user}".format(bot))
-
-
+  print("We Have logged in as {0.user}".format(bot))
+  get_status()
+  
 ### bot commands ###
 @bot.slash_command(
     guild_ids=[server_id],
@@ -50,7 +55,7 @@ async def on_ready():
 ### Discord Command Cool down ###
 # ping response function
 async def ping(ctx):
-    await ctx.respond(f"pong! latency: {int(bot.latency * 1000)} ms")
+  await ctx.respond(f"pong! latency: {int(bot.latency * 1000)} ms")
 
 ## Start EC2 command
 @bot.slash_command(guild_ids=[server_id], description="command to start ec2 instance")
@@ -58,7 +63,7 @@ async def ping(ctx):
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def ec2_start(ctx):
-    await functions.start_ec2(ctx, ec2_instance, ec2_status, instance_id)
+  await functions.start_ec2(ctx, ec2_instance, ec2_status, instance_id)
 ## Stop EC2 command
 @bot.slash_command(guild_ids=[server_id], description="command to stop ec2 instance")
 ### Discord Command Cool down ###
@@ -80,22 +85,9 @@ async def ec2_reboot(ctx):
 ### Discord Command Cool down ###
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 15, commands.BucketType.user)
-async def ec2_instance_status(ctx,ec2_status):
-    embed = discord.Embed(
-        title="AWS EC2 Instance Status",
-        color=discord.Colour.blue(),  # Pycord provides a class with default colors you can choose from
-    )
-    embed.set_author(
-        name="creationsoftre",
-        url="https://github.com/creationsoftre/",
-        icon_url="https://github.com/creationsoftre/blob/blob/main/logo.png",
-    )
-    embed.add_field(name="EC2 Status", value="ec2_status", inline=True)
-    embed.set_footer(text="© 2022, creationsoftre")
-
-    await ctx.respond(embed=embed)
-
-
+async def ec2_instance_status(ctx):
+  await functions.send_ec2_status(ctx,ec2_status)
+    
 # error handling on commands
 @bot.event
 async def on_application_command_error(ctx, error):

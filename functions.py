@@ -1,8 +1,7 @@
 import logging
 import discord
-from discord.ext import commands
 from botocore.exceptions import ClientError
-from discord.ui import Select,View
+from discord.ui import View
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +105,34 @@ async def reboot_ec2(ctx,ec2_instance,ec2_status,instance_id):
 ### GUIDE ###
 
 
+async def send_ec2_status(ctx,ec2_status):
+  embed = discord.Embed(
+    title="AWS EC2 Instance Status",
+    color=discord.Colour.blue(),  # Pycord provides a class with default colors you can choose from
+  )
+  embed.set_author(
+    name="creationsoftre",
+    url="https://github.com/creationsoftre/",
+    icon_url="https://github.com/creationsoftre/blob/blob/main/logo.png",
+  )
+  red_circle = "\U0001f534"
+  green_circle = "\U0001f7e2"
+  yellow_circle = "\U0001f7e1"
+  blue_circle = "	\U0001f535"
+  
+  if ec2_status == "stopped" or ec2_status == "terminated":
+    embed.add_field(name="EC2 Status:", value=f"{red_circle} {ec2_status}", inline=False)
+  
+  if ec2_status == "running":
+    embed.add_field(name="EC2 Status", value=f"{green_circle} {ec2_status}", inline=False)
+  
+  if ec2_status == "pending" or ec2_status == "stopping" or ec2_status == "shutting-down":
+    embed.add_field(name="EC2 Status", value=f"{yellow_circle} {ec2_status}", inline=False)
+  
+  if ec2_status == "rebooting":
+    embed.add_field(name="EC2 Status", value=f"{blue_circle} {ec2_status}", inline=False)
+  embed.set_footer(text="© 2022, creationsoftre")
+  await ctx.respond(embed=embed)
 class View_UI(View):
   def __init__(self,ctx):
     super().__init__(timeout=30)
