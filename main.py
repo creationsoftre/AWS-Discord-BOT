@@ -20,32 +20,24 @@ server_id = 766533904433545236
 ec2_role_id = 965340756330025052
 
 #### AWS Variables: ####
-# AWS session
+# AWS session passed to get_instance_info method
 session = boto3.Session(
     aws_access_key_id=os.environ["aws_access_key_id"],
     aws_secret_access_key=os.environ["aws_secret_access_key"],
     region_name="us-east-2",
 )
-# initialize aws ec2
-ec2_session = session.resource('ec2')
-# EC2 instance with id
-instance_id = "i-0df8f3c6a775b5ce7"
-# ec2 instance
-ec2_instance = ec2_session.Instance(instance_id)
-# get ec2 status
-ec2_status = ec2_instance.state["Name"]
-def get_status():
-  global ec2_status
-  ec2_status = ec2_instance.state["Name"]
-  Timer(60,get_status).start()
+ec2_client = session.client("ec2")
+#tag-value of ec2 instance
+ec2_tag_value = "ACServer01"
+#Assign return variables in func to local variables
+instance_id, instance_launchtime, instance_az, instance_state, instance_name = functions.get_instance_info(ec2_client,ec2_tag_value)
 
-  
 ### bot events ###
 @bot.event
 async def on_ready():
   print("We Have logged in as {0.user}".format(bot))
-  get_status()
-  
+  functions.get_instance_info(ec2_client,ec2_tag_value)
+
 ### bot commands ###
 @bot.slash_command(
     guild_ids=[server_id],
@@ -63,14 +55,14 @@ async def ping(ctx):
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def ec2_start(ctx):
-  await functions.start_ec2(ctx, ec2_instance, ec2_status, instance_id)
+  await functions.start_ec2(ctx, ec2_client, instance_state, instance_id)
 ## Stop EC2 command
 @bot.slash_command(guild_ids=[server_id], description="command to stop ec2 instance")
 ### Discord Command Cool down ###
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def ec2_stop(ctx):
-    await functions.stop_ec2(ctx, ec2_instance, ec2_status, instance_id)
+    await functions.stop_ec2(ctx, ec2_client, instance_state, instance_id)
 
 ## Reboot EC2 command
 @bot.slash_command(guild_ids=[server_id],description="command to reboot ec2 instance")
@@ -78,7 +70,7 @@ async def ec2_stop(ctx):
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def ec2_reboot(ctx):
-    await functions.reboot_ec2(ctx, ec2_instance, ec2_status, instance_id)
+    await functions.reboot_ec2(ctx, ec2_client, instance_state, instance_id)
 
 ## Get EC2 status command
 @bot.slash_command(guild_ids=[server_id],description="command to to get ec2 instance status")
@@ -86,7 +78,7 @@ async def ec2_reboot(ctx):
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 15, commands.BucketType.user)
 async def ec2_instance_status(ctx):
-  await functions.send_ec2_status(ctx,ec2_status)
+  await functions.send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,instance_az,instance_name)
     
 # error handling on commands
 @bot.event

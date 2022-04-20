@@ -5,15 +5,34 @@ from discord.ui import View
 
 logger = logging.getLogger(__name__)
 
+def get_instance_info(ec2_client,ec2_tag_value):
+  #gets' ec2 instance by tag-value
+  reservations = ec2_client.describe_instances(Filters=[{"Name": "tag-value","Values": [ec2_tag_value],}]).get("Reservations")
+  for reservation in reservations:
+    for instance in reservation["Instances"]:
+      instance_id = instance["InstanceId"]
+      instance_launchtime = instance["LaunchTime"]
+      instance_az = instance["Placement"]["AvailabilityZone"]
+      instance_state = instance["State"]["Name"]
+      instance_name = instance["KeyName"]
+      return instance_id, instance_launchtime, instance_az, instance_state, instance_name
 
+def check_instance_state(ec2_client,ec2_tag_value):
+  #gets' ec2 instance by tag-value
+  reservations = ec2_client.describe_instances(Filters=[{"Name": "tag-value","Values": [ec2_tag_value],}]).get("Reservations")
+  for reservation in reservations:
+    for instance in reservation["Instances"]:
+      check_state = instance["State"]["Name"]
+      return check_state
+      
+     
 #function for starting EC2 Instance
-async def start_ec2(ctx,ec2_instance,ec2_status,instance_id):
+async def start_ec2(ctx,ec2_client,instance_state,instance_id):
   #check ec2 state
-    if ec2_status == 'stopped':
+    if instance_state == 'stopped':
       try:
         await ctx.respond("Initiating Startup...")
-        response = ec2_instance.start()
-        ec2_instance.wait_until_running()
+        response = ec2_client.start_instances(InstanceIds=[instance_id])
         logger.info("Started instance %s.", instance_id)
         await ctx.respond("Instance Successfully Started.")
       except ClientError:
@@ -23,15 +42,15 @@ async def start_ec2(ctx,ec2_instance,ec2_status,instance_id):
       else:
         return response
         await ctx.respond(response)
-    elif ec2_status == 'running':
+    elif instance_state == 'running':
       await ctx.respond("Instance is already running.")
-    elif ec2_status == 'pending':
+    elif instance_state == 'pending':
       await ctx.respond("Couldn't start instance. Instance is in a pending state.")
-    elif ec2_status == 'stopping':
+    elif instance_state == 'stopping':
       await ctx.respond("Couldn't start instance. Instance is in a stopping state.")
-    elif ec2_status == 'shutting-down':
+    elif instance_state == 'shutting-down':
       await ctx.respond("Couldn't start instance. Instance is in a shutting-down state.")
-    elif ec2_status == 'terminated':
+    elif instance_state == 'terminated':
       await ctx.respond("Couldn't start instance. Instance has been terminiated.")
     else:
       await ctx.respond('An issue has occured. Please contact administrator for further investigation.')
@@ -39,13 +58,12 @@ async def start_ec2(ctx,ec2_instance,ec2_status,instance_id):
 
 
 #function for stopping EC2 Instance
-async def stop_ec2(ctx,ec2_instance,ec2_status,instance_id):
+async def stop_ec2(ctx,ec2_client,instance_state,instance_id):
   #check ec2 state
-    if ec2_status == 'running':
+    if instance_state == 'running':
       try:
         await ctx.respond("Initiating Stop...")
-        response = ec2_instance.stop()
-        ec2_instance.wait_until_stopped()
+        response = ec2_client.stop_instances(InstanceIds=[instance_id])
         logger.info("Stop instance %s.", instance_id)
         await ctx.respond("Instance Successfully Stopped.")
       except ClientError:
@@ -55,15 +73,15 @@ async def stop_ec2(ctx,ec2_instance,ec2_status,instance_id):
       else:
         return response
         await ctx.respond(response)
-    elif ec2_status == 'stopped':
+    elif instance_state == 'stopped':
       await ctx.respond("Instance is already stopped.")
-    elif ec2_status == 'pending':
+    elif instance_state == 'pending':
       await ctx.respond("Couldn't stop instance. Instance is in a pending state.")
-    elif ec2_status == 'stopping':
+    elif instance_state == 'stopping':
       await ctx.respond("Couldn't stop instance. Instance is in a stopping state.")
-    elif ec2_status == 'shutting-down':
+    elif instance_state == 'shutting-down':
       await ctx.respond("Couldn't stop instance. Instance is in a shutting-down state.")
-    elif ec2_status == 'terminated':
+    elif instance_state == 'terminated':
       await ctx.respond("Couldn't stop instance. Instance has been terminiated.")
     else:
       await ctx.respond('An issue has occured. Please contact administrator for further investigation.')
@@ -73,13 +91,12 @@ async def stop_ec2(ctx,ec2_instance,ec2_status,instance_id):
 #function for rebooting EC2 Instance
       
 #function for stopping EC2 Instance
-async def reboot_ec2(ctx,ec2_instance,ec2_status,instance_id):
+async def reboot_ec2(ctx,ec2_client,instance_state,instance_id):
   #check ec2 state
-    if ec2_status == 'running':
+    if instance_state == 'running':
       try:
         await ctx.respond("Initiating Reboot...")
-        response = ec2_instance.reboot()
-        ec2_instance.wait_until_running()
+        response = ec2_client.reboot_instances(InstanceIds=[instance_id])
         logger.info("Reboot instance %s.", instance_id)
         await ctx.respond("Instance Successfully Rebooted.")
       except ClientError:
@@ -89,15 +106,15 @@ async def reboot_ec2(ctx,ec2_instance,ec2_status,instance_id):
       else:
         return response
         await ctx.respond(response)
-    elif ec2_status == 'stopped':
+    elif instance_state == 'stopped':
       await ctx.respond("Instance is in stopped state. Please start instance.")
-    elif ec2_status == 'pending':
+    elif instance_state == 'pending':
       await ctx.respond("Couldn't reboot instance. Instance is in a pending state.")
-    elif ec2_status == 'stopping':
+    elif instance_state == 'stopping':
       await ctx.respond("Couldn't reboot instance. Instance is in a stopping state.")
-    elif ec2_status == 'shutting-down':
+    elif instance_state == 'shutting-down':
       await ctx.respond("Couldn't reboot instance. Instance is in a shutting-down state.")
-    elif ec2_status == 'terminated':
+    elif instance_state == 'terminated':
       await ctx.respond("Couldn't reboot instance. Instance has been terminiated.")
     else:
       await ctx.respond('An issue has occured. Please contact administrator for further investigation.')
@@ -105,7 +122,10 @@ async def reboot_ec2(ctx,ec2_instance,ec2_status,instance_id):
 ### GUIDE ###
 
 
-async def send_ec2_status(ctx,ec2_status):
+async def send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,instance_az,instance_name):
+  #check instance state
+  check_state = None
+  check_state = check_instance_state(ec2_client,ec2_tag_value)
   embed = discord.Embed(
     title="AWS EC2 Instance Status",
     color=discord.Colour.blue(),  # Pycord provides a class with default colors you can choose from
@@ -119,18 +139,24 @@ async def send_ec2_status(ctx,ec2_status):
   green_circle = "\U0001f7e2"
   yellow_circle = "\U0001f7e1"
   blue_circle = "	\U0001f535"
+
+  embed.add_field(name="Server Name:", value=f"{blue_circle} {instance_name}", inline=True)
   
-  if ec2_status == "stopped" or ec2_status == "terminated":
-    embed.add_field(name="EC2 Status:", value=f"{red_circle} {ec2_status}", inline=False)
+  if check_state == "stopped" or check_state == "terminated":
+    embed.add_field(name="Status:", value=f"{red_circle} {check_state}", inline=True)
   
-  if ec2_status == "running":
-    embed.add_field(name="EC2 Status", value=f"{green_circle} {ec2_status}", inline=False)
+  if check_state == "running":
+    embed.add_field(name="Status:", value=f"{green_circle} {check_state}", inline=True)
   
-  if ec2_status == "pending" or ec2_status == "stopping" or ec2_status == "shutting-down":
-    embed.add_field(name="EC2 Status", value=f"{yellow_circle} {ec2_status}", inline=False)
+  if check_state == "pending" or check_state == "stopping" or check_state == "shutting-down":
+    embed.add_field(name="Status:", value=f"{yellow_circle} {check_state}", inline=True)
   
-  if ec2_status == "rebooting":
-    embed.add_field(name="EC2 Status", value=f"{blue_circle} {ec2_status}", inline=False)
+  if check_state == "rebooting":
+    embed.add_field(name="Status:", value=f"{blue_circle} {check_state}", inline=True)
+    
+  #Info embeds
+  embed.add_field(name="Launch Time:", value=f"{blue_circle} {instance_launchtime}", inline=True)
+  embed.add_field(name="Availability Zone:", value=f"{blue_circle} {instance_az}", inline=True)
   embed.set_footer(text="© 2022, creationsoftre")
   await ctx.respond(embed=embed)
 class View_UI(View):
@@ -150,15 +176,15 @@ class View_UI(View):
       if select.values[0] == "Start EC2":
         await interaction.response.edit_message(view=self)
         await interaction.followup.send("/ec2 start")
-        #await start_ec2(ctx,ec2_instance,ec2_status,instance_id)
+        #await start_ec2(ctx,ec2_client,instance_state,instance_id)
       elif select.values[0] == "Stop EC2":
         await interaction.response.edit_message(view=self)
         await interaction.followup.send(f"Command commenced: {select.values}")
-        #await stop_ec2(ctx,ec2_instance,ec2_status,instance_id)
+        #await stop_ec2(ctx,ec2_client,instance_state,instance_id)
       elif select.values[0] == "Reboot EC2":
         await interaction.response.edit_message(view=self)
         await interaction.followup.send(f"Command commenced: {select.values}")
-        #await reboot_ec2(ctx, ec2_instance, ec2_status, instance_id)
+        #await reboot_ec2(ctx, ec2_client, instance_state, instance_id)
       else:
         await interaction.response.send_message("Error occured. Please contact an Administrator.")
 
