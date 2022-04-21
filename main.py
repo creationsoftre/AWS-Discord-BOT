@@ -77,7 +77,7 @@ async def ec2_reboot(ctx):
 ### Discord Command Cool down ###
 @commands.has_role(ec2_role_id)
 @commands.cooldown(1, 15, commands.BucketType.user)
-async def ec2_instance_status(ctx):
+async def ec2_status(ctx):
   await functions.send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,instance_az,instance_name)
     
 # error handling on commands
@@ -102,11 +102,6 @@ async def on_application_command_error(ctx, error):
 
 @bot.slash_command(guild_ids=[server_id], description="A Guide on how to use the bot.")
 async def guide(ctx):
-    try:
-        view = functions.View_UI(ctx)
-    except AttributeError as e:
-        print(e)
-
     embed = discord.Embed(
         title="AWS Admin BOT Guide",
         description="This AWS bot is to allow you to start ,stop, and reboot a AWS EC2 Instance.",
@@ -116,18 +111,20 @@ async def guide(ctx):
     embed.set_author(
         name="creationsoftre",
         url="https://github.com/creationsoftre/",
-        icon_url="https://github.com/creationsoftre/blob/blob/main/logo.png",
+        icon_url="https://cdn.discordapp.com/attachments/766827274656940063/966520086313713704/logo.png",
     )
     embed.add_field(
         name="Commands",
         value="The commands below is how to manage the aws ec2 instance:",
         inline=False,
     )
-    embed.add_field(name="Start EC2 Instance", value="/ec2 start", inline=True)
-    embed.add_field(name="Stop EC2 Instance", value="/ec2 stop", inline=True)
-    embed.add_field(name="Reboot EC2 Instance", value="/ec2 reboot", inline=True)
+    embed.add_field(name="Start EC2 Instance", value="/ec2_start", inline=True)
+    embed.add_field(name="Stop EC2 Instance", value="/ec2_stop", inline=True)
+    embed.add_field(name="Reboot EC2 Instance", value="/ec2_reboot", inline=True)
+    embed.add_field(name="EC2 Instance Status", value="/ec2_status", inline=True)
     embed.set_footer(text="© 2022, creationsoftre")
 
+    view = functions.View_UI(ctx)
     await ctx.respond("Hello! Here's a cool embed.", embed=embed, view=view)
 
 

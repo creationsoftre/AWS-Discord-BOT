@@ -64,6 +64,7 @@ async def stop_ec2(ctx,ec2_client,instance_state,instance_id):
       try:
         await ctx.respond("Initiating Stop...")
         response = ec2_client.stop_instances(InstanceIds=[instance_id])
+        print ("outside function called")
         logger.info("Stop instance %s.", instance_id)
         await ctx.respond("Instance Successfully Stopped.")
       except ClientError:
@@ -133,7 +134,7 @@ async def send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,i
   embed.set_author(
     name="creationsoftre",
     url="https://github.com/creationsoftre/",
-    icon_url="https://github.com/creationsoftre/blob/blob/main/logo.png",
+    icon_url="https://cdn.discordapp.com/attachments/766827274656940063/966520086313713704/logo.png",
   )
   red_circle = "\U0001f534"
   green_circle = "\U0001f7e2"
@@ -159,6 +160,8 @@ async def send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,i
   embed.add_field(name="Availability Zone:", value=f"{blue_circle} {instance_az}", inline=True)
   embed.set_footer(text="© 2022, creationsoftre")
   await ctx.respond(embed=embed)
+
+  
 class View_UI(View):
   def __init__(self,ctx):
     super().__init__(timeout=30)
@@ -167,31 +170,40 @@ class View_UI(View):
   @discord.ui.select(
     placeholder="Select a command",
       options=[
-      discord.SelectOption(label="Start EC2", value='start', description="Command to start an EC2 Instance."),
-      discord.SelectOption(label="Stop EC2", value='stop', description="Command to stop an EC2 Instance."),
-      discord.SelectOption(label="Reboot EC2", value='reboot', description="Command to reboot an EC2 Instance.")
+      discord.SelectOption(label="Start EC2", description="Command to start an EC2 Instance."),
+      discord.SelectOption(label="Stop EC2", description="Command to stop an EC2 Instance."),
+      discord.SelectOption(label="Reboot EC2", description="Command to reboot an EC2 Instance."),
+      discord.SelectOption(label="EC2 Status", description="Command that provides details about the EC2 Instance.")
       ],)
+  
   async def select_callback(self, select, interaction):
-      select.disabled=True
-      if select.values[0] == "Start EC2":
-        await interaction.response.edit_message(view=self)
-        await interaction.followup.send("/ec2 start")
-        #await start_ec2(ctx,ec2_client,instance_state,instance_id)
-      elif select.values[0] == "Stop EC2":
-        await interaction.response.edit_message(view=self)
-        await interaction.followup.send(f"Command commenced: {select.values}")
-        #await stop_ec2(ctx,ec2_client,instance_state,instance_id)
-      elif select.values[0] == "Reboot EC2":
-        await interaction.response.edit_message(view=self)
-        await interaction.followup.send(f"Command commenced: {select.values}")
-        #await reboot_ec2(ctx, ec2_client, instance_state, instance_id)
-      else:
-        await interaction.response.send_message("Error occured. Please contact an Administrator.")
+    select.disabled=True
+    
+    if select.values[0] == "Start EC2":
+      await interaction.response.edit_message(view=self)
+      await interaction.followup.send("Type in the command: /ec2_start")
+    elif select.values[0] == "Stop EC2":
+      await interaction.response.edit_message(view=self)
+      await interaction.followup.send("Type in the command: /ec2_stop")
+    elif select.values[0] == "Reboot EC2":
+      await interaction.response.edit_message(view=self)
+      await interaction.followup.send("Type in the command: /ec2_reboot")
+    elif select.values[0] == "EC2 Status":
+      await interaction.response.edit_message(view=self)
+      await interaction.followup.send("Type in the command: /ec2_status")
+    else:
+      await interaction.response.edit_message(view=self)
+      await interaction.followup.send_message("Error occured. Please contact an Administrator.")
+
+    
 
   async def on_timeout(self):
     for child in self.children:
       child.disabled = True 
       child.placeholder ='Disabled Due to Timeout'
       await self.ctx.edit(content='Timeout Reached. Please try again.', view=self)
+
+  
+
 
 
