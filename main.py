@@ -3,8 +3,7 @@ from discord.ext import commands
 import os
 import boto3
 import functions
-from threading import Timer
-
+from discord.commands import Option
 
 # initialize bot commands
 bot = commands.Bot()
@@ -39,12 +38,68 @@ async def on_ready():
   functions.get_instance_info(ec2_client,ec2_tag_value)
 
 ### bot commands ###
+
+@bot.slash_command(
+  guild_ids=[server_id],
+  description="clear messages in chat."
+)
+#@commands.has_role(administrator = True)
+async def clear(ctx,
+  amount: Option(discord.SlashCommandOptionType.integer, description="amount of messages", required = True),
+  filter: Option(discord.SlashCommandOptionType.string, description="more specific filter options", required = False, default = None, choices=["embeds","bots","contains"]),
+  contains: Option(discord.SlashCommandOptionType.string, description="only works if filter is set to contains", required = False, default = None),
+  user: Option(discord.SlashCommandOptionType.user, description="purge messages from user", required = False, default = None)
+  ):
+  def valid_user(msg):
+    return msg.author.id == user.id
+  #if only amount or amount and user is being used execute the following
+  if amount > 0 and user == None and filter == None and contains == None:
+    try:
+      await ctx.channel.purge(limit=amount)
+      print(user)
+      await ctx.respond("Purge is complete.", delete_after=1)
+    except:
+      await ctx.respond("Error occured, Contact Administrator for assistance.")
+  elif amount > 0 and user != None and filter == None and contains == None:
+    #if only amount and user are being used execute the following
+    try:
+      await ctx.channel.purge(limit=amount, check = valid_user)
+      await ctx.respond(f"Successfully purged {amount} messages from {user}.", delete_after=1)
+    except:
+      await ctx.respond("Error occured, Contact Administrator for assistance.")
+  elif amount > 0 and user != None or user == None and filter != None and contains == None:
+    if filter == 'embed':
+      try:
+        await ctx.channel.messages.fetch
+        await ctx.channel.purge(limit=amount, check=valid_user)
+        await ctx.respond(f"Successfully purged {amount} embed messages.", delete_after=1)
+      except:
+        await ctx.respond("Error occured, Contact Administrator for assistance.")
+    elif filter == 'bots':
+      try:
+        await ctx.channel.purge(limit=amount)
+        await ctx.respond(f"Successfully purged {amount} embed messages.", delete_after=1)
+      except:
+        await ctx.respond("Error occured, Contact Administrator for assistance.")
+    if filter == 'contains':
+      try:
+        await ctx.channel.purge(limit=amount)
+        await ctx.respond(f"Successfully purged {amount} embed messages.", delete_after=1)
+      except:
+        await ctx.respond("Error occured, Contact Administrator for assistance.")
+  else:
+    await ctx.respond("You need to provide how many messages to purge.", delete_after=1)
+
+
+    
+    
+  
+  
+
 @bot.slash_command(
     guild_ids=[server_id],
-    description="A ping test to make sure the bot is responding as expected.",
+    description="A ping test to make sure the bot is responding as expected."
 )
-
-### Discord Command Cool down ###
 # ping response function
 async def ping(ctx):
   await ctx.respond(f"pong! latency: {int(bot.latency * 1000)} ms")
@@ -111,7 +166,7 @@ async def guide(ctx):
     embed.set_author(
         name="creationsoftre",
         url="https://github.com/creationsoftre/",
-        icon_url="https://cdn.discordapp.com/attachments/766827274656940063/966520086313713704/logo.png",
+        icon_url="https://cdn.discordapp.com/attachments/950967021938556959/966750552757272646/cbktre_logo.png",
     )
     embed.add_field(
         name="Commands",
@@ -125,7 +180,7 @@ async def guide(ctx):
     embed.set_footer(text="© 2022, creationsoftre")
 
     view = functions.View_UI(ctx)
-    await ctx.respond("Hello! Here's a cool embed.", embed=embed, view=view)
+    await ctx.respond("Hello! See what commands are used in this bot.", embed=embed, view=view)
 
 
 bot.run(discord_token)
