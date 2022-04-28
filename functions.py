@@ -1,7 +1,10 @@
+import os
 import logging
 import discord
 from botocore.exceptions import ClientError
 from discord.ui import View
+from datetime import datetime
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -156,6 +159,110 @@ async def send_instance_state(ctx,ec2_client,ec2_tag_value,instance_launchtime,i
   embed.set_footer(text="© 2022, creationsoftre")
   await ctx.respond(embed=embed)
 
+async def purge(ctx, amount, user):
+  def valid_user(msg):
+    return msg.author.id == user.id
+    
+  #if only amount or amount and user is being used execute the following
+  if amount > 0 and user == None:
+    try:
+      await ctx.channel.purge(limit=amount)
+      await ctx.respond(f"Successfully purged {amount} messages.", delete_after=1)
+    except:
+      await ctx.respond("Error occured, Contact Administrator for assistance.")
+  elif amount > 0 and user != None:
+    #if only amount and user are being used execute the following
+    try:
+      await ctx.channel.purge(limit=amount, check=valid_user)
+      await ctx.respond(f"Successfully purged {amount} messages from {user}.", delete_after=1)
+    except:
+      await ctx.respond("Error occured, Contact Administrator for assistance.")
+  else:
+    await ctx.respond("You need to provide how many messages to purge.", delete_after=1)
+
+async def purge_logging(ctx,channel,amount,messages):
+  unique_id = uuid.uuid4().hex
+  file_name = f"{unique_id}_{ctx.channel.name}.txt"
+  try:
+    try:
+      #write to file
+      logfile =  open(file_name, "a")
+      if type(messages) == list:
+        for message in messages:
+          logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+      else:
+        message = messages
+        logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+      logfile.close()
+    except RuntimeError:
+      raise RuntimeError
+      
+    try:   
+      #send file to Discord in message
+      with open(file_name, "rb") as file:
+        await ctx.channel.send(file=discord.File(file, file_name))
+    except RuntimeError:
+      raise RuntimeError
+
+    #remove file once sent to discord
+    os.remove(f"{unique_id}_{ctx.channel.name}.txt")
+  except RuntimeError:
+    await ctx.channel.send("Unable to execute log shipping. Please contact an Administrator.")
+    raise RuntimeError
+    
+  if amount == 1:
+    embed = discord.Embed(
+    description = f"{amount} Message was deleted in {ctx.channel.mention}", timestamp = datetime.now(),
+    color = discord.Colour.red()
+  )
+  elif amount > 1:
+    embed = discord.Embed(
+    description = f"{amount} Messages were deleted in {ctx.channel.mention}", timestamp = datetime.now(),
+    color = discord.Colour.red()
+  )
+  await channel.send(embed=embed)
+  
+async def package_logging(ctx,channel,amount,messages):
+  unique_id = uuid.uuid4().hex
+  file_name = f"{unique_id}_{ctx.channel.name}.txt"
+  try:
+    try:
+      #write to file
+      logfile =  open(file_name, "a")
+      if type(messages) == list:
+        for message in messages:
+          logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+      else:
+        message = messages
+        logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+      logfile.close()
+    except RuntimeError:
+      raise RuntimeError
+      
+    try:   
+      #send file to Discord in message
+      with open(file_name, "rb") as file:
+        await ctx.channel.send(file=discord.File(file, file_name))
+    except RuntimeError:
+      raise RuntimeError
+
+    #remove file once sent to discord
+    os.remove(f"{unique_id}_{ctx.channel.name}.txt")
+  except RuntimeError:
+    await ctx.channel.send("Unable to execute log shipping. Please contact an Administrator.")
+    raise RuntimeError
+    
+  if amount == 1:
+    embed = discord.Embed(
+    description = f"{amount} Message was packaged in {ctx.channel.mention}", timestamp = datetime.now(),
+    color = discord.Colour.red()
+  )
+  elif amount > 1:
+    embed = discord.Embed(
+    description = f"{amount} Messages were packaged in {ctx.channel.mention}", timestamp = datetime.now(),
+    color = discord.Colour.red()
+  )
+  await channel.send(embed=embed)
   
 class View_UI(View):
   def __init__(self,ctx):
@@ -200,8 +307,10 @@ class View_UI(View):
       child.disabled = True 
       child.placeholder ='Disabled Due to Timeout'
       await self.ctx.edit(content='Timeout Reached. Please try again.', view=self)
+  
 
   
+
 
 
 
