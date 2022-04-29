@@ -167,14 +167,12 @@ async def purge(ctx, amount, user):
   if amount > 0 and user == None:
     try:
       await ctx.channel.purge(limit=amount)
-      await ctx.respond(f"Successfully purged {amount} messages.", delete_after=1)
     except:
       await ctx.respond("Error occured, Contact Administrator for assistance.")
   elif amount > 0 and user != None:
     #if only amount and user are being used execute the following
     try:
       await ctx.channel.purge(limit=amount, check=valid_user)
-      await ctx.respond(f"Successfully purged {amount} messages from {user}.", delete_after=1)
     except:
       await ctx.respond("Error occured, Contact Administrator for assistance.")
   else:

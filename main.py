@@ -230,6 +230,7 @@ async def clear(
     choices=log_choice
   )
 ):
+    await ctx.response.defer(ephemeral=True)
     channel = bot.get_channel(log_channel_id)
     if ctx.channel.id == log_channel_id and logging == "Yes":
         # purge with logging
@@ -259,6 +260,7 @@ async def package(
         required=True,
     ),
 ):
+    await ctx.response.defer(ephemeral=True)
     channel = bot.get_channel(log_channel_id)
     if ctx.channel.id == log_channel_id:
         messages = await channel.history(limit=amount).flatten()
