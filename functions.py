@@ -190,10 +190,15 @@ async def purge_logging(ctx,channel,amount,messages):
       if type(messages) == list:
         for message in messages:
           if message.embeds:
-            print(message.embeds[0].description)
             logfile.write("\n" + "Description: " + str(message.embeds[0].description) + "| Author: " + str(message.embeds[0].author) + "| Timestamp: " + str(message.embeds[0].timestamp) + ">")
           else:
             logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + "| Date Created: " + str(message.created_at) + ">")
+      else:
+        message = messages
+        if message.embeds:
+            logfile.write("\n" + "Description: " + str(message.embeds[0].description) + "| Author: " + str(message.embeds[0].author) + "| Timestamp: " + str(message.embeds[0].timestamp) + ">")
+        else:
+          logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + "| Date Created: " + str(message.created_at) + ">")
       logfile.close()
     except RuntimeError:
       raise RuntimeError
@@ -233,7 +238,6 @@ async def package_logging(ctx,channel,amount,messages):
       if type(messages) == list:
         for message in messages:
           if message.embeds:
-            print(message.embeds[0].description)
             logfile.write("\n" + "Description: " + str(message.embeds[0].description) + "| Author: " + str(message.embeds[0].author) + "| Timestamp: " + str(message.embeds[0].timestamp) + ">")
           else:
             logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + "| Date Created: " + str(message.created_at) + ">")
