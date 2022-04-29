@@ -189,10 +189,11 @@ async def purge_logging(ctx,channel,amount,messages):
       logfile =  open(file_name, "a")
       if type(messages) == list:
         for message in messages:
-          logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
-      else:
-        message = messages
-        logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+          if message.embeds:
+            print(message.embeds[0].description)
+            logfile.write("\n" + "Description: " + str(message.embeds[0].description) + "| Author: " + str(message.embeds[0].author) + "| Timestamp: " + str(message.embeds[0].timestamp) + ">")
+          else:
+            logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + "| Date Created: " + str(message.created_at) + ">")
       logfile.close()
     except RuntimeError:
       raise RuntimeError
@@ -231,7 +232,11 @@ async def package_logging(ctx,channel,amount,messages):
       logfile =  open(file_name, "a")
       if type(messages) == list:
         for message in messages:
-          logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
+          if message.embeds:
+            print(message.embeds[0].description)
+            logfile.write("\n" + "Description: " + str(message.embeds[0].description) + "| Author: " + str(message.embeds[0].author) + "| Timestamp: " + str(message.embeds[0].timestamp) + ">")
+          else:
+            logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + "| Date Created: " + str(message.created_at) + ">")
       else:
         message = messages
         logfile.write("\n" + "< Content: " + str(message.content) + "| User: " + str(message.author) + "| User ID: " + str(message.author.id) + str(message.created_at) + ">")
