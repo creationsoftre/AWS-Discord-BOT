@@ -44,7 +44,7 @@ async def start_ec2(ctx, ec2_client, instance_state, instance_id):
     #check ec2 state
     if instance_state == 'stopped':
         try:
-            await ctx.respond("Initiating Startup...")
+            await ctx.response.defer(emphermal=True)
             response = ec2_client.start_instances(InstanceIds=[instance_id])
             logger.info("Started instance %s.", instance_id)
             await ctx.respond("Instance Successfully Started.")
@@ -84,7 +84,7 @@ async def stop_ec2(ctx, ec2_client, instance_state, instance_id):
     #check ec2 state
     if instance_state == 'running':
         try:
-            await ctx.respond("Initiating Stop...")
+            await ctx.response.defer(emphermal=True)
             response = ec2_client.stop_instances(InstanceIds=[instance_id])
             print("outside function called")
             logger.info("Stop instance %s.", instance_id)
@@ -125,7 +125,7 @@ async def reboot_ec2(ctx, ec2_client, instance_state, instance_id):
     #check ec2 state
     if instance_state == 'running':
         try:
-            await ctx.respond("Initiating Reboot...")
+            await ctx.response.defer(emphermal=True)
             response = ec2_client.reboot_instances(InstanceIds=[instance_id])
             logger.info("Reboot instance %s.", instance_id)
             await ctx.respond("Instance Successfully Rebooted.")
