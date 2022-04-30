@@ -1,11 +1,21 @@
 import discord
 from discord.ext import commands
-import functions
+from functions import aws_funcs
 from variables import global_vars
+
 
 class aws_commands(commands.Cog):
     def __init__(self, bot):
-        self.bot = bot
+      self.bot = bot
+
+      (
+        self.instance_id,
+        self.instance_launchtime,
+        self.instance_az,
+        self.instance_state,
+        self.instance_name,
+      ) = aws_funcs.get_instance_info(global_vars.ec2_client, global_vars.ec2_tag_value)
+      
 
     ## Start EC2 command
     @discord.slash_command(guild_ids=[global_vars.server_id],
@@ -13,7 +23,9 @@ class aws_commands(commands.Cog):
     @commands.has_role(global_vars.ec2_role_id)
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def ec2_start(self, ctx):
-        await functions.start_ec2(ctx, global_vars.ec2_client, global_vars.instance_state, global_vars.instance_id)
+        await aws_funcs.start_ec2(ctx, global_vars.ec2_client,
+                                  self.instance_state,
+                                  self.instance_id)
 
     ## Stop EC2 command
 
@@ -23,7 +35,9 @@ class aws_commands(commands.Cog):
     @commands.has_role(global_vars.ec2_role_id)
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def ec2_stop(self, ctx):
-        await functions.stop_ec2(ctx, global_vars.ec2_client, global_vars.instance_state, global_vars.instance_id)
+        await aws_funcs.stop_ec2(ctx, global_vars.ec2_client,
+                                 self.instance_state,
+                                 self.instance_id)
 
     ## Reboot EC2 command
 
@@ -33,8 +47,9 @@ class aws_commands(commands.Cog):
     @commands.has_role(global_vars.ec2_role_id)
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def ec2_reboot(self, ctx):
-        await functions.reboot_ec2(ctx, global_vars.ec2_client, global_vars.instance_state,
-                                   global_vars.instance_id)
+        await aws_funcs.reboot_ec2(ctx, global_vars.ec2_client,
+                                   self.instance_state,
+                                   self.instance_id)
 
     ## Get EC2 status command
 
@@ -44,9 +59,11 @@ class aws_commands(commands.Cog):
     @commands.has_role(global_vars.ec2_role_id)
     @commands.cooldown(1, 15, commands.BucketType.user)
     async def ec2_status(self, ctx):
-        await functions.send_instance_state(ctx, global_vars.ec2_client, global_vars.ec2_tag_value,
-                                            global_vars.instance_launchtime, global_vars.instance_az,
-                                            global_vars.instance_name)
+      await aws_funcs.send_instance_state(ctx, global_vars.ec2_client,
+                                            global_vars.ec2_tag_value,
+                                            self.instance_launchtime,
+                                            self.instance_az,
+                                            self.instance_name)
 
 
 def setup(bot):

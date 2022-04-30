@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
-import functions
+from functions import View_UI
 from variables import global_vars
+
 
 class utility_commands(commands.Cog):
     def __init__(self, bot):
@@ -12,14 +13,14 @@ class utility_commands(commands.Cog):
         description=
         "A ping test to make sure the bot is responding as expected.",
     )
-    async def ping(self,ctx):
+    async def ping(self, ctx):
         await ctx.respond(f"pong! latency: {int(self.bot.latency * 1000)} ms")
 
     ##Guide
     # Help Guide command
     @discord.slash_command(guild_ids=[global_vars.server_id],
                            description="A Guide on how to use the bot.")
-    async def guide(ctx):
+    async def guide(self,ctx):
         embed = discord.Embed(
             title="AWS Admin BOT Guide",
             description=
@@ -53,7 +54,7 @@ class utility_commands(commands.Cog):
                         inline=True)
         embed.set_footer(text="© 2022, creationsoftre")
 
-        view = functions.View_UI(ctx)
+        view = View_UI(ctx)
         await ctx.respond("Hello! See what commands are used in this bot.",
                           embed=embed,
                           view=view)

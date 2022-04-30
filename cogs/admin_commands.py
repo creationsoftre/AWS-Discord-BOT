@@ -1,19 +1,22 @@
 import discord
 from discord.ext import commands
-import functions
+from functions import admin_funcs
 from discord.commands import Option
 from datetime import datetime
 import asyncio
 from discord.commands import OptionChoice
 from variables import global_vars
 
+
 class admin_commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        #self.message = admin_commands.on_message_delete(self, global_vars.message)
+        #self.messages = admin_commands.on_bulk_message_delete(self, global_vars.messages)
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
-        
+
         channel = self.bot.get_channel(global_vars.log_channel_id)
         embed = discord.Embed(
             description=
@@ -24,6 +27,7 @@ class admin_commands(commands.Cog):
         embed.set_footer(text=f"User ID: {ctx.author.id}")
         embed.set_author(name=f"{ctx.author}", icon_url=ctx.author.avatar)
         await channel.send(embed=embed)
+
 
 # Logging - send embed to aws-logs channel when command is invoked whether failed or successful
 
@@ -40,26 +44,25 @@ class admin_commands(commands.Cog):
         embed.set_author(name=f"{ctx.author}", icon_url=ctx.author.avatar)
         await channel.send(embed=embed)
 
+  
     @commands.Cog.listener()
     async def on_message_delete(self, msg):
         # call global variable
-        global_vars.message
-        message = msg
-        return message
+        global_vars.message = msg
+        return global_vars.message
 
     @commands.Cog.listener()
     async def on_bulk_message_delete(self, msgs):
         # call global variable
-        global_vars.messages
-        messages = msgs
-        return messages
+        global_vars.message = msgs
+        return global_vars.message
 
     # Clear Command
     log_choice = [
         OptionChoice(name="Yes", value="Yes"),
         OptionChoice(name="No", value="No")
     ]
-  
+
     @discord.slash_command(guild_ids=[global_vars.server_id],
                            description="clear messages in chat.")
     @commands.has_role(global_vars.administrator)
@@ -81,20 +84,19 @@ class admin_commands(commands.Cog):
         channel = self.bot.get_channel(global_vars.log_channel_id)
         if ctx.channel.id == global_vars.log_channel_id and logging == "Yes":
             # purge with logging
-            await functions.purge(ctx, amount, user)
-            message = admin_commands().on_message_delete()
-            messages = admin_commands().on_bulk_message_delete()
+            await admin_funcs.purge(ctx, amount, user)
+            
             if amount == 1:
                 # call purge-logging
                 await asyncio.sleep(5)
-                await functions.purge_logging(ctx, channel, amount, message)
+                await admin_funcs.purge_logging(ctx, channel, amount, global_vars.message)
             else:
                 # call purge-logging
                 await asyncio.sleep(5)
-                await functions.purge_logging(ctx, channel, amount, messages)
+                await admin_funcs.purge_logging(ctx, channel, amount, global_vars.message)
         else:
             # purge without logging in other channels
-            await functions.purge(ctx, amount, user)
+            await admin_funcs.purge(ctx, amount, user)
 
     # Package Command
     @discord.slash_command(guild_ids=[global_vars.server_id],
@@ -114,7 +116,7 @@ class admin_commands(commands.Cog):
         if ctx.channel.id == global_vars.log_channel_id:
             messages = await channel.history(limit=amount).flatten()
             await asyncio.sleep(5)
-            await functions.package_logging(ctx, channel, amount, messages)
+            await admin_funcs.package_logging(ctx, channel, amount, messages)
         else:
             await ctx.respond(
                 f"/package command can only be ran in {channel.mention}",
