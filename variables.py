@@ -36,3 +36,4 @@ class global_vars():
     # Global Message variable
     message = ""
     messages = [None]
+    messages_count = ""

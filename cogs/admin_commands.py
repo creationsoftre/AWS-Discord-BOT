@@ -53,7 +53,8 @@ class admin_commands(commands.Cog):
     async def on_bulk_message_delete(self, msgs):
         # call global variable
         global_vars.message = msgs
-        return global_vars.message
+        global_vars.messages_count = len(msgs)
+        return global_vars.message,global_vars.messages_count
 
     # Clear Command
     log_choice = [
@@ -113,6 +114,7 @@ class admin_commands(commands.Cog):
         channel = self.bot.get_channel(global_vars.log_channel_id)
         if ctx.channel.id == global_vars.log_channel_id:
             messages = await channel.history(limit=amount).flatten()
+            global_vars.messages_count = len(messages)
             await asyncio.sleep(5)
             await admin_funcs.package_logging(ctx, channel, amount, messages)
         else:

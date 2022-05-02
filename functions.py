@@ -317,7 +317,7 @@ class admin_funcs():
         elif amount > 1:
             embed = discord.Embed(
                 description=
-                f"{amount} Messages were deleted in {ctx.channel.mention}",
+                f"{global_vars.messages_count} Messages were deleted in {ctx.channel.mention}",
                 timestamp=datetime.now(),
                 color=discord.Colour.red())
         await channel.send(embed=embed)
@@ -380,7 +380,7 @@ class admin_funcs():
         elif amount > 1:
             embed = discord.Embed(
                 description=
-                f"{amount} Messages were packaged in {ctx.channel.mention}",
+                f"{global_vars.messages_count} Messages were packaged in {ctx.channel.mention}",
                 timestamp=datetime.now(),
                 color=discord.Colour.red())
         await channel.send(embed=embed)
