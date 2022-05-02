@@ -11,8 +11,6 @@ from variables import global_vars
 class admin_commands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        #self.message = admin_commands.on_message_delete(self, global_vars.message)
-        #self.messages = admin_commands.on_bulk_message_delete(self, global_vars.messages)
 
     @commands.Cog.listener()
     async def on_application_command_completion(self, ctx):
