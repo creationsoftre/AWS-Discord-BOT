@@ -27,11 +27,11 @@ class global_vars():
     session = boto3.Session(
         aws_access_key_id=os.environ["aws_access_key_id"],
         aws_secret_access_key=os.environ["aws_secret_access_key"],
-        region_name="us-east-2",
+        region_name="us-east-1",
     )
     ec2_client = session.client("ec2")
     # tag-value of ec2 instance
-    ec2_tag_value = "ACServer01"
+    ec2_tag_value = "assetto_instance"
     
     # Global Message variable
     message = ""

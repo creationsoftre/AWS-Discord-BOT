@@ -122,6 +122,5 @@ class admin_commands(commands.Cog):
                 f"/package command can only be ran in {channel.mention}",
                 ephermal=True)
 
-
 def setup(bot):
     bot.add_cog(admin_commands(bot))

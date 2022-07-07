@@ -18,10 +18,12 @@ class aws_funcs():
         for reservation in reservations:
             for instance in reservation["Instances"]:
                 instance_id = instance["InstanceId"]
-                instance_launchtime = instance["LaunchTime"]
+                instance_launchtime = instance["LaunchTime"].strftime("%m-%d-%Y %H:%M:%S")
                 instance_az = instance["Placement"]["AvailabilityZone"]
                 instance_state = instance["State"]["Name"]
-                instance_name = instance["KeyName"]
+                for tags in instance["Tags"]:
+                  if tags["Key"] == 'Name':
+                    instance_name = tags["Value"]
                 return instance_id, instance_launchtime, instance_az, instance_state, instance_name
 
 
