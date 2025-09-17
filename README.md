@@ -18,6 +18,12 @@ I built a Discord bot that exposes a **safe, role‑gated control plane** for AW
 - **Guardrails:** command cool‑downs, required Discord roles, and environment‑based secrets.
 - **Ops hygiene:** session reuse, defensive error handling, optional log packaging for purged messages.
 
+**Guide Embed**  
+![AWS Guide — Discord Embed](https://github.com/creationsoftre/blob/blob/main/aws_guide.png)
+
+**Status Embed**  
+![AWS Status — Discord Embed](https://github.com/creationsoftre/blob/blob/main/aws_status.png)
+
 ---
 
 ## Architecture at a glance
